@@ -10,28 +10,36 @@ LIMIT 1;
 --- ANSWER is NPI #1881634483, Bruce Pendley and claim count is 99,707---
 
 ---2a---
-SELECT SUM(prescription.total_claim_count) AS total_count, prescriber.specialty_description
+SELECT SUM(prescription.total_claim_count) AS total_claims, prescriber.specialty_description
 FROM prescription 
 INNER JOIN prescriber 
 USING (NPI)
 GROUP BY prescriber.specialty_description 
-ORDER BY total_count DESC NULLS LAST;
+ORDER BY total_claims DESC NULLS LAST
+LIMIT 1;
 --ANSWER is Family Practice--
 
 ---2b---
-SELECT SUM(prescription.total_claim_count) AS total_count, prescriber.specialty_description, drug.opioid_drug_flag
+SELECT specialty_description
 FROM prescription 
 INNER JOIN prescriber 
 USING (NPI)
 INNER JOIN drug
 USING (drug_name)
 WHERE drug.opioid_drug_flag = 'Y'
-GROUP BY prescriber.specialty_description, drug.opioid_drug_flag
-ORDER BY total_count DESC NULLS LAST;
+GROUP BY specialty_description
+ORDER BY SUM(total_claim_count) DESC NULLS LAST
+LIMIT 1;
 --ANSWER is Nurse Practitioner at 900,845--
 
 --2c--
-
+SELECT specialty_description
+FROM prescriber
+LEFT JOIN prescription 
+USING (npi)
+GROUP BY specialty_description
+HAVING SUM(total_claim_count) IS NULL
+-- Answer is 15--
 
 --3a--
 SELECT SUM(p.total_drug_cost), generic_name
